@@ -136,8 +136,38 @@
                 <div class="tpl-passport-emblem"></div>
                 <div class="tpl-passport-lines"></div>
               </div>
+              <div
+                v-else
+                class="tpl-preview tpl-custom"
+                :style="customBackgroundUrl ? { backgroundImage: `url(${customBackgroundUrl})` } : {}"
+              >
+                <Icon v-if="!customBackgroundUrl" icon="mingcute:pic-line" width="22" height="22" />
+                <div class="tpl-custom-card"></div>
+              </div>
               <span class="tpl-label">{{ tpl.label }}</span>
             </button>
+          </div>
+          <div v-if="setting.loginTemplate === 'custom'" class="custom-background-editor">
+            <input
+              ref="backgroundInput"
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              hidden
+              @change="uploadBackground"
+            />
+            <div class="custom-background-copy">
+              <strong>{{ $t('customBackgroundTitle') }}</strong>
+              <span>{{ $t('customBackgroundHint') }}</span>
+            </div>
+            <div class="custom-background-actions">
+              <el-button type="primary" :loading="backgroundLoading" @click="backgroundInput?.click()">
+                <Icon icon="mingcute:upload-2-line" width="15" height="15" />
+                {{ customBackgroundUrl ? $t('replaceImage') : $t('uploadImage') }}
+              </el-button>
+              <el-button v-if="customBackgroundUrl" :disabled="backgroundLoading" @click="removeBackground">
+                {{ $t('removeImage') }}
+              </el-button>
+            </div>
           </div>
         </div>
       </div>
@@ -146,10 +176,14 @@
 </template>
 
 <script setup>
-import {computed, defineOptions} from "vue";
+import {computed, defineOptions, ref} from "vue";
 import {Icon} from "@iconify/vue";
 import {useI18n} from "vue-i18n";
 import {useSysSetting} from "../use-sys-setting.js";
+import {deleteBackground, setBackground} from "@/request/setting.js";
+import {compressImage, fileToBase64} from "@/utils/file-utils.js";
+import {cvtR2Url} from "@/utils/convert.js";
+import {ElMessage} from "element-plus";
 
 defineOptions({
   name: 'sys-setting-appearance'
@@ -157,6 +191,9 @@ defineOptions({
 
 const {t} = useI18n()
 const {setting, editSetting} = useSysSetting()
+const backgroundInput = ref(null)
+const backgroundLoading = ref(false)
+const customBackgroundUrl = computed(() => setting.value.background ? cvtR2Url(setting.value.background) : '')
 
 const colorThemes = [
   { id: 'indigo',  background: 'linear-gradient(135deg, #6366f1, #4f46e5)', label: 'Indigo'  },
@@ -184,6 +221,7 @@ const loginTemplates = computed(() => [
   { id: 'envelope',      label: t('templateEnvelope')      },
   { id: 'terminal',      label: t('templateTerminal')      },
   { id: 'passport',      label: t('templatePassport')      },
+  { id: 'custom',        label: t('templateCustom')        },
 ])
 
 function applyColorTheme(id) {
@@ -200,6 +238,46 @@ function applyLayoutMode(id) {
 function applyLoginTemplate(id) {
   setting.value.loginTemplate = id
   editSetting({loginTemplate: id})
+}
+
+async function uploadBackground(event) {
+  const input = event.target
+  const file = input.files?.[0]
+  input.value = ''
+  if (!file) return
+
+  const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+  if (!allowedTypes.includes(file.type)) {
+    ElMessage({message: t('backgroundTypeError'), type: 'warning', plain: true})
+    return
+  }
+  if (file.size > 10 * 1024 * 1024) {
+    ElMessage({message: t('backgroundSizeError'), type: 'warning', plain: true})
+    return
+  }
+
+  backgroundLoading.value = true
+  try {
+    const compressed = file.type === 'image/gif'
+      ? file
+      : await compressImage(file, {convertSize: 1024 * 1024, quality: 0.82})
+    const key = await setBackground(await fileToBase64(compressed, true))
+    setting.value.background = key
+    ElMessage({message: t('backgroundUploadSuccess'), type: 'success', plain: true})
+  } finally {
+    backgroundLoading.value = false
+  }
+}
+
+async function removeBackground() {
+  backgroundLoading.value = true
+  try {
+    await deleteBackground()
+    setting.value.background = ''
+    ElMessage({message: t('backgroundRemoveSuccess'), type: 'success', plain: true})
+  } finally {
+    backgroundLoading.value = false
+  }
 }
 </script>
 
@@ -801,5 +879,71 @@ function applyLoginTemplate(id) {
     height: 38px;
     background: linear-gradient(#8d8775 1px, transparent 1px) 0 0 / 100% 8px repeat-y;
   }
+}
+
+.tpl-custom {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #8aa6a2, #293b3a);
+  background-position: center;
+  background-size: cover;
+  color: rgba(255, 255, 255, .85);
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(8, 14, 15, .2);
+  }
+
+  .tpl-custom-card {
+    position: absolute;
+    z-index: 1;
+    right: 9px;
+    top: 13px;
+    width: 34px;
+    height: 38px;
+    border: 1px solid rgba(255, 255, 255, .7);
+    border-radius: 4px;
+    background: rgba(255, 255, 255, .72);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, .2);
+  }
+}
+
+.custom-background-editor {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  max-width: 680px;
+  padding: 14px 16px;
+  border: 1px dashed var(--el-border-color);
+  border-radius: 10px;
+  background: var(--el-fill-color-extra-light);
+}
+
+.custom-background-copy {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  gap: 3px;
+
+  strong { font-size: 13px; color: var(--el-text-color-primary); }
+  span { font-size: 12px; line-height: 1.5; color: var(--el-text-color-secondary); }
+}
+
+.custom-background-actions {
+  display: flex;
+  flex-shrink: 0;
+
+  :deep(.el-button span) { gap: 5px; }
+}
+
+@media (max-width: 600px) {
+  .custom-background-editor { align-items: stretch; flex-direction: column; }
+  .custom-background-actions { width: 100%; }
+  .custom-background-actions :deep(.el-button) { flex: 1; }
 }
 </style>

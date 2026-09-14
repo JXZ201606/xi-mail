@@ -1,11 +1,12 @@
 import {useSettingStore} from "@/store/setting.js";
+import {useServerStore} from "@/store/server.js";
 export function cvtR2Url(key) {
 
     if (!key) {
-        return + 'https://' + ''
+        return ''
     }
 
-    if (key.startsWith('https://')) {
+    if (/^https?:\/\//i.test(key)) {
         return key
     }
 
@@ -14,7 +15,8 @@ export function cvtR2Url(key) {
     let domain = settings.r2Domain
 
     if (!domain) {
-        return key;
+        const baseUrl = useServerStore().getActiveBaseURL().replace(/\/$/, '')
+        return `${baseUrl}/oss/${key.replace(/^\//, '')}`;
     }
 
     if (!domain.startsWith('http')) {

@@ -38,7 +38,7 @@ Try it at [mail.azx.us](https://mail.azx.us) using invite code `viewUser` (limit
 ## ✨ Highlights
 
 **Interface**
-Nine login templates with genuinely different compositions, including Open Letter, Mail Terminal and Postal Passport, and six color themes, plus four post-login layouts (full sidebar, icon-only sidebar, top navigation and Floating Island), all switchable from system settings and persisted server-side. Floating Island uses a detached rail on desktop and a bottom dock on mobile. Icons are unified on `mingcute`; the UI ships in English and Chinese, and the language preference follows the account across devices.
+Ten login templates with genuinely different compositions, including Open Letter, Mail Terminal, Postal Passport and a custom image background, and six color themes, plus four post-login layouts (full sidebar, icon-only sidebar, top navigation and Floating Island), all switchable from system settings and persisted server-side. Floating Island uses a detached rail on desktop and a bottom dock on mobile. Icons are unified on `mingcute`; the UI ships in English and Chinese, and the language preference follows the account across devices.
 
 **Users and accounts**
 User IDs are random alphanumeric strings and can be copied with one click. Each user can hold up to 100 mailbox accounts, and a deleted mailbox can be recreated. Mailboxes can be transferred to another user along with all their mail, subject to the recipient's approval. Roles carry a `level` field, so a user can only issue invite codes for roles below their own.

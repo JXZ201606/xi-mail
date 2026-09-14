@@ -221,10 +221,27 @@ const settingService = {
 	async setBackground(c, params) {
 
 		let { background } = params
+		const maxBackgroundBytes = 10 * 1024 * 1024;
 
-		await this.deleteBackground(c);
+		if (typeof background !== 'string') {
+			throw new BizError('Invalid background image', 400);
+		}
 
-		if (background && !background.startsWith('http')) {
+		if (background && !/^https?:\/\//i.test(background)) {
+			const match = background.match(/^data:(image\/(?:jpeg|png|webp|gif));base64,([A-Za-z0-9+/=]+)$/);
+			if (!match) {
+				throw new BizError('Only JPEG, PNG, WebP and GIF images are supported', 400);
+			}
+			const padding = (match[2].match(/=*$/) || [''])[0].length;
+			const byteLength = Math.floor(match[2].length * 3 / 4) - padding;
+			if (byteLength > maxBackgroundBytes) {
+				throw new BizError('Background image must not exceed 10 MB', 400);
+			}
+		}
+
+		const { background: previousBackground } = await this.query(c);
+
+		if (background && !/^https?:\/\//i.test(background)) {
 
 			const file = fileUtils.base64ToFile(background)
 
@@ -238,6 +255,10 @@ const settingService = {
 				contentDisposition: `inline; filename="${file.name}"`
 			});
 
+		}
+
+		if (previousBackground && previousBackground !== background && !/^https?:\/\//i.test(previousBackground)) {
+			await r2Service.delete(c, previousBackground);
 		}
 
 		await orm(c).update(setting).set({ background }).run();
@@ -289,6 +310,7 @@ const settingService = {
 			noticeOffset: settingRow.noticeOffset,
 			notice: settingRow.notice,
 			loginDomain: settingRow.loginDomain,
+			background: settingRow.background || '',
 			linuxdoClientId: settingRow.linuxdoClientId,
 			linuxdoCallbackUrl: settingRow.linuxdoCallbackUrl,
 			linuxdoSwitch: settingRow.linuxdoSwitch,

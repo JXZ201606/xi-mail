@@ -1,5 +1,11 @@
 <template>
   <div :class="['login-page', 'template-' + loginTemplate]" v-loading="oauthLoading" element-loading-text="登录中...">
+    <div
+      v-if="loginTemplate === 'custom' && customBackgroundUrl"
+      class="custom-background"
+      :style="{ backgroundImage: `url(${customBackgroundUrl})` }"
+      aria-hidden="true"
+    ></div>
     <!-- Background decoration (gradient template only) -->
     <div class="bg-layer">
       <div class="bg-orb bg-orb-1"></div>
@@ -384,6 +390,7 @@ import {useI18n} from "vue-i18n";
 import {oauthBindUser, oauthLinuxDoLogin} from "@/request/ouath.js";
 import {useServerStore} from "@/store/server.js";
 import {websiteConfig} from "@/request/setting.js";
+import {cvtR2Url} from "@/utils/convert.js";
 
 const {t} = useI18n();
 const accountStore = useAccountStore();
@@ -392,6 +399,10 @@ const uiStore = useUiStore();
 const settingStore = useSettingStore();
 const serverStore = useServerStore();
 const loginTemplate = computed(() => settingStore.settings?.loginTemplate || 'gradient');
+const customBackgroundUrl = computed(() => {
+  const background = settingStore.settings?.background;
+  return background ? cvtR2Url(background) : '';
+});
 const currentRegKeyHint = computed(() => {
   const s = settingStore.settings;
   if (!s) return '';
@@ -1195,6 +1206,7 @@ function submitRegister() {
 @import './templates/envelope';
 @import './templates/terminal';
 @import './templates/passport';
+@import './templates/custom';
 
 /* Keep the registration layout compact even when a template customizes
    the generic .fields container. These rules intentionally follow imports. */

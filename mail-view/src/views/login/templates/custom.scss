@@ -1,0 +1,48 @@
+.login-page.template-custom {
+  background: #17201f;
+
+  .bg-layer { display: none; }
+
+  .custom-background {
+    position: absolute;
+    inset: 0;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+    transform: scale(1.01);
+
+    &::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, rgba(7, 12, 14, .18), rgba(7, 12, 14, .42));
+    }
+  }
+
+  .card-wrapper {
+    align-items: flex-end;
+    padding-right: clamp(24px, 8vw, 128px);
+  }
+
+  .auth-card {
+    background: rgba(255, 255, 255, .9);
+    border-color: rgba(255, 255, 255, .65);
+    box-shadow: 0 24px 80px rgba(0, 0, 0, .3);
+  }
+}
+
+:global(.dark) .login-page.template-custom .auth-card {
+  background: rgba(18, 22, 26, .9);
+  border-color: rgba(255, 255, 255, .12);
+}
+
+@media (max-width: 720px) {
+  .login-page.template-custom {
+    .custom-background::after { background: rgba(7, 12, 14, .35); }
+
+    .card-wrapper {
+      align-items: center;
+      padding-right: 18px;
+    }
+  }
+}
