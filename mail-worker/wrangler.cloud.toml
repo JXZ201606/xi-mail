@@ -1,0 +1,50 @@
+name = "xi-mail"
+main = "src/index.js"
+compatibility_date = "2025-06-04"
+keep_vars = true
+
+[observability]
+enabled = true
+
+[[d1_databases]]
+binding = "db"
+database_name = "xi-mail"
+database_id = "3100bbfa-c009-4e6a-a74f-82d9d44221db"
+
+[[kv_namespaces]]
+binding = "kv"
+id = "805a3d81afac494caf022cc984ea19fa"
+
+[[r2_buckets]]
+binding = "r2"
+bucket_name = "xi-mail"
+
+# ── Static assets (一体化部署模式) ──
+# 如果前后端分离部署（mail-view 单独部署到 Pages / Vercel 等），
+# 注释掉下方整个 [assets] 块即可，Worker 将作为纯 API 运行。
+[assets]
+binding = "assets"
+directory = "./dist"
+not_found_handling = "single-page-application"
+run_worker_first = true
+
+[triggers]
+crons = ["0 16 * * *"]
+
+[[routes]]
+pattern = "mail.cnmb.lol"
+custom_domain = true
+
+[vars]
+orm_log = false
+domain = ["cnmb.lol"]
+admin = "admin@cnmb.lol"
+
+
+# Uncomment to enable OAuth (LinuxDo)
+# linuxdo_switch = "false"
+# linuxdo_client_id = "<YOUR_LINUXDO_CLIENT_ID>"
+# linuxdo_callback_url = "https://your-worker.workers.dev/oauth/linuxdo/callback"
+
+# [build]
+# command = "pnpm --prefix ../mail-view install && pnpm --prefix ../mail-view run build"
